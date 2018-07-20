@@ -72,6 +72,7 @@ public class PMCArticleParser {
 			if (sections != null & sections.get(0).getTitleSpan() == null) {
 				int absInd = allText.indexOf("Abstract\n");
 				Section abs = new Section(new Span(absInd,absInd+8),new Span(absInd,absInd + 9 + abstText.length()),doc);
+				abs.setSubSections(sections.get(0).getSubSections());
 				sections.set(0, abs);
 			}
 		}

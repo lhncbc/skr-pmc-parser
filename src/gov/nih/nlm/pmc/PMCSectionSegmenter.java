@@ -180,13 +180,19 @@ public class PMCSectionSegmenter implements SectionSegmenter {
 		int tind = -1;
 		if (node instanceof Element) {
 			Element enode = (Element)node;
-			if (enode.getElementsByTagName("title").getLength() == 0) {
+			NodeList titles = enode.getElementsByTagName("title");
+			if (titles.getLength() == 0) {
 				title = "";
 				tind = nind;
 			}
 			else {
-				title = enode.getElementsByTagName("title").item(0).getTextContent();
-				tind = document.getText().indexOf(title,nind);
+				if (isSectionTitle(titles,enode)) {
+					title = enode.getElementsByTagName("title").item(0).getTextContent();
+					tind = document.getText().indexOf(title,nind);
+				} else {
+					title = "";
+					tind = nind;
+				}
 			}
 		}
 		Section th = null;
@@ -197,6 +203,14 @@ public class PMCSectionSegmenter implements SectionSegmenter {
 		}
 		th.setSubSections(allSubSects);
         sect.add(th);
+	}
+	
+	private boolean isSectionTitle(NodeList titles, Node n) {
+		for (int i=0; i < titles.getLength();i++) {
+			Node t = titles.item(i);
+			if (t.getParentNode().equals(n)) return true;
+		}
+		return false;	
 	}
 	
 	private boolean containsAncestor(NodeList nl, Node n) throws Exception {
@@ -216,4 +230,6 @@ public class PMCSectionSegmenter implements SectionSegmenter {
 	}
 	
 }
+
+
 
