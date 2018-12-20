@@ -660,9 +660,9 @@ public class MyPMCArticle {
                 }
                 text.append("<xref ref-type=\"").append(refType).append("\" rid=\"").append(rid).append("\">").append(node.getTextContent()).append("</xref>");
             } else if ((node.getNodeName() != null) && ("fig".equalsIgnoreCase(node.getNodeName()))) {
-            	text.append(getCaption(node));
+            	text.append(" " + getCaption(node) + " ");
             } else if ((node.getNodeName() != null) && ("table-wrap".equalsIgnoreCase(node.getNodeName()))) {
-            	text.append(getCaption(node));
+            	text.append(" " + getCaption(node) + " ");
             } else if ((node.getNodeName() != null) && ("disp-formula".equalsIgnoreCase(node.getNodeName()))) {
             	System.err.println("Formula... skipping..");
                 //Ignore
@@ -697,9 +697,9 @@ public class MyPMCArticle {
  //           text.append("<xref ref-type=\"").append(refType).append("\" rid=\"").append(rid).append("\">").append(node.getTextContent()).append("</xref>");
             text.append(node.getTextContent());
         } else if ((node.getNodeName() != null) && ("fig".equalsIgnoreCase(node.getNodeName()))) {
-        	text.append(getCaption(node));
+        	text.append(" " + getCaption(node) + " ");
         } else if ((node.getNodeName() != null) && ("table-wrap".equalsIgnoreCase(node.getNodeName()))) {
-        	text.append(getCaption(node));
+        	text.append(" " + getCaption(node) + " ");
         } else if ((node.getNodeName() != null) && ("disp-formula".equalsIgnoreCase(node.getNodeName()))) {
         	System.err.println("Formula... skipping..");
             //Ignore
@@ -858,9 +858,9 @@ public class MyPMCArticle {
             		String id = getNodeId(c);
             		if (id.equals("") == false) {
             			if ((c.getNodeName() != null) && ("fig".equalsIgnoreCase(c.getNodeName()))) {
-            				nodesOfInterest.put(id, getCaption(c));
+            				nodesOfInterest.put(id, " " + getCaption(c) + " ");
                         } else if ((c.getNodeName() != null) && ("table-wrap".equalsIgnoreCase(c.getNodeName()))) {
-                        	nodesOfInterest.put(id, getCaption(c));
+                        	nodesOfInterest.put(id, " " + getCaption(c) + " ");
                         } else {
                         	nodesOfInterest.put(id, getTextHelper(c.getChildNodes()).toString());
                         }

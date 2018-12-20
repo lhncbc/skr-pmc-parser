@@ -31,7 +31,7 @@ public class PMCSentenceSegmenter implements SentenceSegmenter {
 	private static final Pattern TEXT_PATTERN = Pattern.compile("[A-Za-z]");
 	private static final Pattern END_COMMA_PATTERN = Pattern.compile(", *(?!(\\r?\\n)+)$");
 	private static final Pattern BACTERIA_PATTERN = Pattern.compile("\\b[A-Z]+(\\.(\\r?\\n)+|\\. +|\\?(\\r?\\n)+|\\!(\\r?\\n)+|\\? +|\\! +|(\\r?\\n)+)$");
-	private static final Pattern OTHER_PATTERN 	= Pattern.compile("\\b(Figs*|et al|i\\.e|e\\.g|vs|ca|min|sec|Inc|INC|Co|CO|Ltd|LTD)(\\. +)$");
+	private static final Pattern OTHER_PATTERN 	= Pattern.compile("\\b([A-Z]|Figs*|et al|et al|i\\.e|e\\.g|vs|ca|min|sec|no|Dr|Inc|INC|Co|CO|Ltd|LTD|St|b\\.i\\.d)(\\. +)$");
 	
 	@Override
 	public void segment(String inStr, List<Sentence> sentences){
@@ -90,9 +90,9 @@ public class PMCSentenceSegmenter implements SentenceSegmenter {
 		String prevSentence = segmentedSentences0.get(0);
 		for (int i=1; i < segmentedSentences0.size(); i++) {
 			String ss = segmentedSentences0.get(i);
-			if (((ss.charAt(0) >= 'a' && ss.charAt(0) <= 'z') && 
-					BACTERIA_PATTERN.matcher(prevSentence).find()) ||
-					OTHER_PATTERN.matcher(prevSentence).find()){
+			if (((ss.charAt(0) >= 'a' && ss.charAt(0) <= 'z') &&
+					(BACTERIA_PATTERN.matcher(prevSentence).find()) ||
+					OTHER_PATTERN.matcher(prevSentence).find())){
 				segmentedSentences.set(segmentedSentences.size()-1,segmentedSentences.get(segmentedSentences.size()-1) + ss);
 			} else if (TEXT_PATTERN.matcher(ss).find() == false)  {
 				segmentedSentences.set(segmentedSentences.size()-1,segmentedSentences.get(segmentedSentences.size()-1) + ss);
