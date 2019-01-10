@@ -44,7 +44,7 @@ public class PMCArticleParser {
 	
     private static final String XREF_PATH="//xref";
 	   
-	private static Document parseArticle(String id, String filename) throws Exception {
+	public static Document parseArticle(String id, String filename) throws Exception {
 		MyPMCArticle article = new MyPMCArticle(filename);
 		String title = article.getTitle();
 		String abstText = article.getAbstractText();
@@ -62,14 +62,15 @@ public class PMCArticleParser {
 		log.info("Back matter: " + backMatter);*/
 		
 		boolean hasAbstractTitle = hasAbstractTitle(article);
-		String allText = "Title\n" + title + "\n" + (hasAbstractTitle ? "" :  "Abstract\n" ) + abstText + "\n" +  fullText + "\nBack matter\n" + backMatter;
+		String allText = "Title\n" + title + "\n" + (hasAbstractTitle ? "" :  "Abstract\n" ) + abstText + "\n" +  fullText + "\n ";
+		if (!backMatter.isEmpty()) allText +=  "Back matter\n" + backMatter;
 		Document doc = new Document(id, allText);
 		PMCSectionSegmenter sectSegmenter = new PMCSectionSegmenter(article);
 		sectSegmenter.segment(doc);
-		addBackMatterAsSection(allText,backMatter,doc);
+		if (!backMatter.isEmpty()) addBackMatterAsSection(allText,backMatter,doc);
 		if (!hasAbstractTitle) {
 			List<Section> sections = doc.getSections();
-			if (sections != null & sections.get(0).getTitleSpan() == null) {
+			if (sections != null && sections.size() > 0 && sections.get(0).getTitleSpan() == null) {
 				int absInd = allText.indexOf("Abstract\n");
 				Section abs = new Section(new Span(absInd,absInd+8),new Span(absInd,absInd + 9 + abstText.length()),doc);
 				abs.setSubSections(sections.get(0).getSubSections());
@@ -94,7 +95,7 @@ public class PMCArticleParser {
 		log.log(Level.INFO,"Number of sentences {0}: {1}.", new Object[]{id,sentences.size()});
 		int i = 1;
 		for (Sentence sentence: sentences) {
-			System.out.println("Sentence " + i++ + ": " + sentence.getText());
+//			System.out.println("Sentence " + i++ + ": " + sentence.getText());
 			CoreNLPWrapper.coreNLP(sentence);
 			nDoc.addSentence(sentence);
 			sentence.setDocument(nDoc);
@@ -264,6 +265,8 @@ public class PMCArticleParser {
 			String id = filename.substring(filename.lastIndexOf(File.separator)+1).replace(".xml", "");
 			log.log(Level.INFO,"Processing {0}: {1}.", new Object[]{id,++fileNum});
 			String outFilename = outDir.getAbsolutePath() + File.separator + id + ".xml";
+			File outF = new File(outFilename);
+			if (outF.exists() && outF.length() > 0) continue;
 			PrintWriter pw = new PrintWriter(outFilename);
 			try {
 				Element docEl = processSingleFile(id, filename);
