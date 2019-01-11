@@ -30,3 +30,5 @@ hs_err_pid*
 # Large Files
 lib/stanford-corenlp-3.3.1-models.jar
 
+/bin/
+/classes/

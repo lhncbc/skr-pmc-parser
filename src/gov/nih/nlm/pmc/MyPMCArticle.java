@@ -86,8 +86,8 @@ public class MyPMCArticle {
     public static final Pattern CITATION_PATTERN = 
     		Pattern.compile("<xref +?ref-type=\"bibr\".*?>.*?</xref>");
     
-
-
+   private static final String REMOVE_PATTERN =  "(?m)[ \t]*\r?\n";
+    
     private Document document;
     private int abstractSentenceIndex;
     private int fullTextSentenceIndex;
@@ -151,8 +151,7 @@ public class MyPMCArticle {
      * @return the title of the article
      */
     public String getTitle() {
-        String title = commonElementParser(TITLE_XPATH, NO_TITLE_DEFAULT);
-        return title;
+        return commonElementParser(TITLE_XPATH, NO_TITLE_DEFAULT).replaceAll(REMOVE_PATTERN, " ");
     }
 
     /**
@@ -660,9 +659,9 @@ public class MyPMCArticle {
                 }
                 text.append("<xref ref-type=\"").append(refType).append("\" rid=\"").append(rid).append("\">").append(node.getTextContent()).append("</xref>");
             } else if ((node.getNodeName() != null) && ("fig".equalsIgnoreCase(node.getNodeName()))) {
-            	text.append(getCaption(node));
+            	text.append(" " + getCaption(node) + " ");
             } else if ((node.getNodeName() != null) && ("table-wrap".equalsIgnoreCase(node.getNodeName()))) {
-            	text.append(getCaption(node));
+            	text.append(" " + getCaption(node) + " ");
             } else if ((node.getNodeName() != null) && ("disp-formula".equalsIgnoreCase(node.getNodeName()))) {
             	System.err.println("Formula... skipping..");
                 //Ignore
@@ -680,7 +679,7 @@ public class MyPMCArticle {
         StringBuffer text = new StringBuffer();
  //       System.out.println("NODE " + node.getNodeName());
         if ("#text".equalsIgnoreCase(node.getNodeName())) {
-        	text.append(node.getTextContent());
+        	text.append(node.getTextContent().toString().replaceAll(REMOVE_PATTERN, " "));
         } else if ((node.getNodeName() != null) && ("xref".equalsIgnoreCase(node.getNodeName()))) {
         	NamedNodeMap nodeAttributes = node.getAttributes();
         	String refType, rid;
@@ -697,9 +696,9 @@ public class MyPMCArticle {
  //           text.append("<xref ref-type=\"").append(refType).append("\" rid=\"").append(rid).append("\">").append(node.getTextContent()).append("</xref>");
             text.append(node.getTextContent());
         } else if ((node.getNodeName() != null) && ("fig".equalsIgnoreCase(node.getNodeName()))) {
-        	text.append(getCaption(node));
+        	text.append(" " + getCaption(node) + " ");
         } else if ((node.getNodeName() != null) && ("table-wrap".equalsIgnoreCase(node.getNodeName()))) {
-        	text.append(getCaption(node));
+        	text.append(" " + getCaption(node) + " ");
         } else if ((node.getNodeName() != null) && ("disp-formula".equalsIgnoreCase(node.getNodeName()))) {
         	System.err.println("Formula... skipping..");
             //Ignore
@@ -710,12 +709,9 @@ public class MyPMCArticle {
         	for (int i = 0; i < node.getChildNodes().getLength(); ++i) {
                 Node n = node.getChildNodes().item(i);
                 StringBuffer subbuf = getTextHelper(n);
-                // not sure about this but meant to remove newline characters in a paragraph for better sentence splitting
-                if ("p".equalsIgnoreCase(n.getNodeName())) {
-                	String t = subbuf.toString().replaceAll("(?m)[ \t]*\r?\n", " ");
-                	text.append(t);
-                } else {
-                	text.append(subbuf);
+                text.append(subbuf);
+                if (n.getNodeName().equalsIgnoreCase("title")) {
+                	text.append("\n");
                 }
         	}
         }
@@ -835,9 +831,9 @@ public class MyPMCArticle {
         for (int j = 0; j < nodeChildren.getLength(); ++j) {
             Node childNode = nodeChildren.item(j);
             if ((childNode.getNodeName() != null) && "caption".equalsIgnoreCase(childNode.getNodeName())) {
-                caption = childNode.getTextContent();
+                caption = childNode.getTextContent().replaceAll(REMOVE_PATTERN, " ");
             } else if ((childNode.getNodeName() != null) && "label".equalsIgnoreCase(childNode.getNodeName())) {
-                label = childNode.getTextContent();
+                label = childNode.getTextContent().replaceAll(REMOVE_PATTERN, " ");
             } 
         }
         return label.trim() + " " + caption.trim();
@@ -858,9 +854,9 @@ public class MyPMCArticle {
             		String id = getNodeId(c);
             		if (id.equals("") == false) {
             			if ((c.getNodeName() != null) && ("fig".equalsIgnoreCase(c.getNodeName()))) {
-            				nodesOfInterest.put(id, getCaption(c));
+            				nodesOfInterest.put(id, " " + getCaption(c) + " ");
                         } else if ((c.getNodeName() != null) && ("table-wrap".equalsIgnoreCase(c.getNodeName()))) {
-                        	nodesOfInterest.put(id, getCaption(c));
+                        	nodesOfInterest.put(id, " " + getCaption(c) + " ");
                         } else {
                         	nodesOfInterest.put(id, getTextHelper(c.getChildNodes()).toString());
                         }

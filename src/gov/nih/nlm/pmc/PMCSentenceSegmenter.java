@@ -26,12 +26,14 @@ public class PMCSentenceSegmenter implements SentenceSegmenter {
 							"(\\. *(\\r?\\n)+|\\? *(\\r?\\n)+|\\! *(\\r?\\n)+|\\. +|\\? +|\\! +|(\\r?\\n)+|" + // new line. carriage return, other legitimate sentence delimiters
 							"\\.\\p{Pf}|" + //double quotes 
 							"[^0-9]\\.\\p{Pf}?[1-9][\\[\\]0-9,\\p{Pd} ]*(?![\\.0-9]+)|" +  // difficulty with citations after the period, either non-digit before the period and a mix of digits, brackets, commas, for the list of citations
-							"[0-9]\\.\\p{Pf}?[1-9][\\[\\]0-9,\\p{Pd} ]*(?=[A-Z][a-z])|$)"); // or digit before the period and a mix of digits, hyphens, brackets, commas followed by a sentence-initial looking token (won't work if the sentence starts with a number or a lowercase
-	private static final Pattern SENTENCE_PATTERN = Pattern.compile("\\w");
-	private static final Pattern TEXT_PATTERN = Pattern.compile("[A-Za-z]");
+							"[0-9]\\.\\p{Pf}?[1-9][\\[\\]0-9,\\p{Pd} ]*(?=[\\p{Lu}][\\p{Ll}])|$)"); // or digit before the period and a mix of digits, hyphens, brackets, commas followed by a sentence-initial looking token (won't work if the sentence starts with a number or a lowercase
+ 	private static final Pattern NON_PRINTABLE_PATTERN = Pattern.compile("^(\\p{Z}+)$");
+	private static final Pattern TEXT_PATTERN = Pattern.compile("[\\p{L}\\p{N}]");
+	private static final Pattern NON_UPPER_PATTERN = Pattern.compile("^[^\\p{Lu}]");
 	private static final Pattern END_COMMA_PATTERN = Pattern.compile(", *(?!(\\r?\\n)+)$");
-	private static final Pattern BACTERIA_PATTERN = Pattern.compile("\\b[A-Z]+(\\.(\\r?\\n)+|\\. +|\\?(\\r?\\n)+|\\!(\\r?\\n)+|\\? +|\\! +|(\\r?\\n)+)$");
-	private static final Pattern OTHER_PATTERN 	= Pattern.compile("\\b(Figs*|et al|i\\.e|e\\.g|vs|ca|min|sec|Inc|INC|Co|CO|Ltd|LTD)(\\. +)$");
+	private static final Pattern END_PATTERN = Pattern.compile("(?=(\\r?\\n)+)$");
+	private static final Pattern BACTERIA_PATTERN = Pattern.compile("\\b[\\p{Lu}]+(\\.(\\r?\\n)+|\\. +|\\?(\\r?\\n)+|\\!(\\r?\\n)+|\\? +|\\! +|(\\r?\\n)+)$");
+	private static final Pattern OTHER_PATTERN = Pattern.compile("\\b([\\p{Lu}]|Figs*|et al|et al|i\\.e|e\\.g|vs|ca|min|sec|no|Dr|Inc|INC|Co|CO|Ltd|LTD|St|b\\.i\\.d)(\\. +)$");
 	
 	@Override
 	public void segment(String inStr, List<Sentence> sentences){
@@ -42,15 +44,17 @@ public class PMCSentenceSegmenter implements SentenceSegmenter {
     	while (m.find()){
     		String text = m.group(1) + m.group(2);
     		log.log(Level.FINEST,"Initial segment: {0}-{1}:\"{2}\"", new Object[]{m.start(),text.length(),text});
-    		if (SENTENCE_PATTERN.matcher(text).find())  {
-    			firstPassSegments.add(text);
-    		}
+    		firstPassSegments.add(text);
     	}
     	List<String> mergedSegments = mergeSegments(firstPassSegments);
     	int start = 0;
     	for (String ms: mergedSegments) {
     		ms = ms.trim();
+    		if (NON_PRINTABLE_PATTERN.matcher(ms).find() || ms.length() == 0) continue;
     		start = inStr.indexOf(ms,start);
+    		if (start == -1) {
+    			log.severe("Unable to identify string " + id + " "+ ms);
+    		}
     		log.log(Level.FINEST,"Merged segment: {0}-{1}", new Object[]{start, ms});
     		Sentence s = new Sentence("S" + ++id, ms, new Span(start,start+ms.length()));
 			sentences.add(s);
@@ -90,17 +94,17 @@ public class PMCSentenceSegmenter implements SentenceSegmenter {
 		String prevSentence = segmentedSentences0.get(0);
 		for (int i=1; i < segmentedSentences0.size(); i++) {
 			String ss = segmentedSentences0.get(i);
-			if (((ss.charAt(0) >= 'a' && ss.charAt(0) <= 'z') && 
-					BACTERIA_PATTERN.matcher(prevSentence).find()) ||
-					OTHER_PATTERN.matcher(prevSentence).find()){
+			if (NON_UPPER_PATTERN.matcher(ss.trim()).find() && 
+					(BACTERIA_PATTERN.matcher(prevSentence).find() ||
+					OTHER_PATTERN.matcher(prevSentence).find())){
 				segmentedSentences.set(segmentedSentences.size()-1,segmentedSentences.get(segmentedSentences.size()-1) + ss);
-			} else if (TEXT_PATTERN.matcher(ss).find() == false)  {
+			} else if (TEXT_PATTERN.matcher(ss).find() == false && END_PATTERN.matcher(prevSentence).find() == false)  {
 				segmentedSentences.set(segmentedSentences.size()-1,segmentedSentences.get(segmentedSentences.size()-1) + ss);
     		}
 			else if (END_COMMA_PATTERN.matcher(prevSentence).find() )  {
 				segmentedSentences.set(segmentedSentences.size()-1,segmentedSentences.get(segmentedSentences.size()-1) + ss);
     		}
-			else {
+			else  {
 				segmentedSentences.add(ss);
 			}
 			prevSentence = ss;

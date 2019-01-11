@@ -33,7 +33,8 @@ public class PubMedCentralDownload {
 			String id = filename.substring(filename.lastIndexOf(File.separator)+1).replace(".xml", "");
 			log.log(Level.INFO,"Processing {0}: {1}.", new Object[]{id,++fileNum});
 			String outFile = outDir.getAbsolutePath() + File.separator + id + ".xml";
-			if (new File(outFile).exists()) continue;
+			File outF = new File(outFile);
+			if (outF.exists() && outF.length() > 0) continue;
 			PrintWriter pw = new PrintWriter(outFile);
 			String xml = PMCSearch.runFetch(id);
 			pw.write(xml);
@@ -54,6 +55,7 @@ public class PubMedCentralDownload {
 		List<String> ids = FileUtils.linesFromFile(in, "UTF-8");
 		for (String id: ids) {
 			String sid = id.substring(3);
+			
 			log.log(Level.INFO,"Processing {0}: {1}.", new Object[]{id,++fileNum});
 			String outFile = outDir.getAbsolutePath() + File.separator + id + ".xml";
 			if (new File(outFile).exists()) continue;
